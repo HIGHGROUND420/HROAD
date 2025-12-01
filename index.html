@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявка на трансфер</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Стили - чтобы было красиво */
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff); /* Цвет фона как в телеге */
+            color: var(--tg-theme-text-color, #000000); /* Цвет текста как в телеге */
+            padding: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: var(--tg-theme-hint-color, #888);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box; /* Чтобы отступы не ломали ширину */
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .guest-block {
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 3px solid #3390ec; /* Синяя полоска слева */
+            background-color: rgba(51, 144, 236, 0.1);
+            border-radius: 5px;
+        }
+
+        #main-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 10px;
+            margin-top: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <label for="pax-count">Количество пассажиров:</label>
+    <input type="number" id="pax-count" value="1" min="1" max="20" onchange="generateGuestFields()">
+
+    <div id="guests-container">
+        </div>
+
+    <label for="hotel">Откуда забрать (Отель):</label>
+    <input type="text" id="hotel" placeholder="Например: Hilton Phuket">
+
+    <label for="flight">Номер рейса:</label>
+    <input type="text" id="flight" placeholder="Например: SU 274">
+
+    <button id="main-btn" onclick="sendData()">Создать заявку</button>
+
+    <script>
+        // Инициализация Телеграм приложения
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрыть на весь экран
+
+        // Функция: Генерирует поля для имен
+        function generateGuestFields() {
+            let count = document.getElementById('pax-count').value;
+            let container = document.getElementById('guests-container');
+            
+            // Очищаем контейнер перед перерисовкой
+            container.innerHTML = '';
+
+            // Цикл: создаем поля столько раз, сколько пассажиров
+            for (let i = 1; i <= count; i++) {
+                // Создаем HTML кусочек для одного гостя
+                let html = `
+                <div class="guest-block">
+                    <label>Пассажир №${i} (Фамилия Имя)</label>
+                    <input type="text" class="guest-name" placeholder="Ivanov Ivan">
+                </div>
+                `;
+                // Добавляем кусочек в контейнер
+                container.innerHTML += html;
+            }
+        }
+
+        // Запускаем генерацию один раз при старте, чтобы было поле для 1 пассажира
+        generateGuestFields();
+
+        // Функция: Собирает данные и отправляет боту
+        function sendData() {
+            let hotel = document.getElementById('hotel').value;
+            let flight = document.getElementById('flight').value;
+            
+            // Собираем все имена в список
+            let guestInputs = document.querySelectorAll('.guest-name');
+            let guestNames = [];
+            guestInputs.forEach(input => {
+                if(input.value) guestNames.push(input.value);
+            });
+
+            // Проверка: если отель не заполнен, ругаемся
+            if (!hotel) {
+                tg.showPopup({title: 'Ошибка', message: 'Укажите отель!'});
+                return;
+            }
+
+            // Формируем объект с данными
+            let data = {
+                guests: guestNames,
+                hotel: hotel,
+                flight: flight
+            };
+
+            // Отправляем данные боту (в виде строки)
+            tg.sendData(JSON.stringify(data)); 
+            
+            // Закрываем окно (опционально, бот сам закроет после обработки)
+            // tg.close();
+        }
+    </script>
+</body>
+</html>
