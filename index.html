@@ -102,35 +102,39 @@
 
         // Функция: Собирает данные и отправляет боту
         function sendData() {
+            // 1. Проверяем, видит ли скрипт Телеграм
+            if (!tg) {
+                alert("Ошибка: Телеграм не найден. Откройте в боте!");
+                return;
+            }
+
             let hotel = document.getElementById('hotel').value;
             let flight = document.getElementById('flight').value;
             
-            // Собираем все имена в список
             let guestInputs = document.querySelectorAll('.guest-name');
             let guestNames = [];
             guestInputs.forEach(input => {
                 if(input.value) guestNames.push(input.value);
             });
 
-            // Проверка: если отель не заполнен, ругаемся
+            // 2. Проверяем заполнение
             if (!hotel) {
-                tg.showPopup({title: 'Ошибка', message: 'Укажите отель!'});
+                tg.showPopup({title: 'Внимание', message: 'Пожалуйста, укажите отель!'});
                 return;
             }
 
-            // Формируем объект с данными
             let data = {
                 guests: guestNames,
                 hotel: hotel,
                 flight: flight
             };
 
-            // Отправляем данные боту (в виде строки)
-            tg.sendData(JSON.stringify(data)); 
-            
-            // Закрываем окно (опционально, бот сам закроет после обработки)
-            // tg.close();
+            // 3. Отправляем данные
+            try {
+                tg.sendData(JSON.stringify(data)); 
+                // 4. ВАЖНО: Закрываем окно принудительно
+                tg.close();
+            } catch (e) {
+                alert("Ошибка отправки: " + e.message);
+            }
         }
-    </script>
-</body>
-</html>
